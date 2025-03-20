@@ -1,5 +1,5 @@
-name: myworkshop
-description: A TypeScript program to deploy a static website on AWS
+name: Lab08project
+description: This is my project
 runtime:
   name: nodejs
   options:
