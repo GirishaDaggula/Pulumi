@@ -1,42 +1,52 @@
-name: main
+name: Pulumi Deployment
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:  # This enables manual triggering
+  workflow_dispatch:  # This enables manual triggering of the workflow
 
 jobs:
   pulumi-up:
-    name: pulumi-up
+    name: Deploy with Pulumi
     runs-on: ubuntu-latest
+
     steps:
+      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Step 2: Set up Node.js environment
       - name: Set up Node.js 18
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
+      # Step 3: Install Dependencies
       - name: Install Dependencies
         working-directory: ./ppinfra
         run: npm install
 
+      # Step 4: Pulumi Login (uses the PULUMI_ACCESS_TOKEN from GitHub Secrets)
       - name: Pulumi Login
         run: pulumi login
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}   
 
+      # Step 5: Pulumi Stack Select (select the stack)
       - name: Pulumi Stack Select
         run: pulumi stack select GirishaDaggula/Lab08project/dev --non-interactive
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}  
 
+      # Step 6: Run Pulumi Action 
       - uses: pulumi/actions@v5
         with:
           command: up  
-          stack-name: GirishaDaggula/Lab08project/dev  # Ensure the correct stack is specified
+          stack-name: GirishaDaggula/Lab08project/dev
           work-dir: ./ppinfra
         env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.pul-82966e759e4d67e8b0ff1a04cbc43c07627c33d7 }}
-          # Uncomment if not using Pulumi ESC:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}  
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
