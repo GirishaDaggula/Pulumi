@@ -1,4 +1,4 @@
-name: Pulumi Deployment
+name: main
 
 on:
   push:
