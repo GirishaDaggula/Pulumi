@@ -33,14 +33,6 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}  # Make sure to store your token as PULUMI_ACCESS_TOKEN in GitHub secrets
 
-      # Step 5: Check if Stack Exists, Create if Missing
-      - name: Create Stack if Missing
-        run: |
-          if ! pulumi stack ls --json | jq -e ".[] | select(.name == \"GirishaDaggula/Lab08project/dev\")" > /dev/null; then
-            pulumi stack init GirishaDaggula/Lab08project/dev
-          fi
-        env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
       # Step 6: Pulumi Stack Select (select the stack with the fully qualified name)
       - name: Pulumi Stack Select
