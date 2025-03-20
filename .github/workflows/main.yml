@@ -23,10 +23,16 @@ jobs:
         working-directory: ./ppinfra
         run: npm install
 
+      - name: Pulumi Login
+        run: pulumi login
+
+      - name: Pulumi Stack Select
+        run: pulumi stack select GirishaDaggula/Lab08project/dev --non-interactive
+
       - uses: pulumi/actions@v5
         with:
-          command: destroy  # Change to 'up' for deployment if needed
-          stack-name: dev
+          command: up  # Change to 'up' for deployment (not 'destroy')
+          stack-name: GirishaDaggula/Lab08project/dev  # Ensure the correct stack is specified
           work-dir: ./ppinfra
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
