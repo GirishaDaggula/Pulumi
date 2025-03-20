@@ -1,4 +1,4 @@
-name: main
+name: Pulumi Deployment
 
 on:
   push:
@@ -31,22 +31,31 @@ jobs:
       - name: Pulumi Login
         run: pulumi login
         env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}   
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}  # Make sure to store your token as PULUMI_ACCESS_TOKEN in GitHub secrets
 
-      # Step 5: Pulumi Stack Select (select the stack)
-      - name: Pulumi Stack Select
-        run: pulumi stack select dev --non-interactive
+      # Step 5: Check if Stack Exists, Create if Missing
+      - name: Create Stack if Missing
+        run: |
+          if ! pulumi stack ls --json | jq -e ".[] | select(.name == \"GirishaDaggula/Lab08project/dev\")" > /dev/null; then
+            pulumi stack init GirishaDaggula/Lab08project/dev
+          fi
         env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}  
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
-      # Step 6: Run Pulumi Action 
+      # Step 6: Pulumi Stack Select (select the stack with the fully qualified name)
+      - name: Pulumi Stack Select
+        run: pulumi stack select GirishaDaggula/Lab08project/dev --non-interactive
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+      # Step 7: Run Pulumi Action 
       - uses: pulumi/actions@v5
         with:
-          command: up  
-          stack-name: dev
+          command: up  # Or 'destroy' if you want to tear down resources
+          stack-name: GirishaDaggula/Lab08project/dev
           work-dir: ./ppinfra
         env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}  
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}  # Reference the secret correctly
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
