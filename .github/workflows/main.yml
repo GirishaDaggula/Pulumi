@@ -35,7 +35,7 @@ jobs:
 
       # Step 5: Pulumi Stack Select (select the stack)
       - name: Pulumi Stack Select
-        run: pulumi stack select GirishaDaggula/Lab08project/dev --non-interactive
+        run: pulumi stack select dev --non-interactive
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}  
 
@@ -43,7 +43,7 @@ jobs:
       - uses: pulumi/actions@v5
         with:
           command: up  
-          stack-name: GirishaDaggula/Lab08project/dev
+          stack-name: dev
           work-dir: ./ppinfra
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}  
