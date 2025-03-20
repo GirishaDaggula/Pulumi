@@ -1,0 +1,5 @@
+config:
+  aws:region: us-west-2
+  myworkshop:errorDocument: error.html
+  myworkshop:indexDocument: index.html
+  myworkshop:path: ./www
