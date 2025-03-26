@@ -42,7 +42,7 @@ jobs:
 
       # Step 6: Pulumi Stack Select
       - name: Pulumi Stack Select
-        run: pulumi stack select GirishaDaggula/Lab8project/dev --non-interactive
+        run: pulumi stack select Girisha/Lab8project/dev --non-interactive
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
@@ -50,7 +50,7 @@ jobs:
       - uses: pulumi/actions@v5
         with:
           command: up  # Or 'destroy' if you want to tear down resources
-          stack-name: GirishaDaggula/Lab8project/dev
+          stack-name: Girisha/Lab8project/dev
           work-dir: ./ppinfra
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
