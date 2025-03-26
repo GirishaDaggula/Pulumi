@@ -36,7 +36,7 @@ jobs:
       # Step 5: Ensure Stack Exists (Initialize if Missing)
       - name: Check if Stack Exists and Initialize if Missing
         run: |
-          pulumi stack ls --json | jq -e ".[] | select(.name == \"GirishaDaggula/Lab8project/dev\")" || pulumi stack init GirishaDaggula/Lab8project/dev
+          pulumi stack ls --json | jq -e ".[] | select(.name == \"Girisha/Lab8project/dev\")" || pulumi stack init Girisha/Lab8project/dev
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
