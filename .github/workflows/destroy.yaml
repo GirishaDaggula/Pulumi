@@ -8,16 +8,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Pulumi
         run: curl -fsSL https://get.pulumi.com | sh
+        env:
+          PULUMI_SKIP_UPDATE_CHECK: true
+
+      - name: Set Up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: ./ppinfra  # Adjust if your Pulumi project is in a different directory
 
       - name: Set Up AWS Credentials
-        run: |
-          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
-          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
-          echo "PULUMI_ACCESS_TOKEN=${{ secrets.PULUMI_ACCESS_TOKEN }}" >> $GITHUB_ENV
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          PULUMI_BACKEND_URL: "https://api.pulumi.com"  # Explicit backend URL
+
+      - name: Select Pulumi Stack
+        run: pulumi stack select dev1 --non-interactive || pulumi stack init dev1 --non-interactive
+        working-directory: ./ppinfra
 
       - name: Destroy Resources
-        run: pulumi destroy --yes
+        run: pulumi destroy --yes --skip-preview
+        working-directory: ./ppinfra
