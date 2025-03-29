@@ -21,16 +21,23 @@ jobs:
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
           echo "PULUMI_ACCESS_TOKEN=${{ secrets.PULUMI_ACCESS_TOKEN }}" >> $GITHUB_ENV
 
-      - name: Find Pulumi Project
-        id: find-project
+      - name: Find and Select Pulumi Stack
+        id: select-stack
         run: |
+          # Find the Pulumi project directory
           PROJECT_DIR=$(find . -name Pulumi.yaml -exec dirname {} \; | head -n 1)
           if [ -z "$PROJECT_DIR" ]; then
             echo "::error::No Pulumi.yaml found in repository"
             exit 1
           fi
           echo "PROJECT_DIR=${PROJECT_DIR}" >> $GITHUB_ENV
-          echo "Found Pulumi project in: ${PROJECT_DIR}"
+          
+          # Select or create the dev1 stack
+          cd "$PROJECT_DIR"
+          if ! pulumi stack select dev1 --non-interactive 2>/dev/null; then
+            echo "::error::Stack dev1 not found and stack creation disabled for destroy workflow"
+            exit 1
+          fi
 
       - name: Install Dependencies
         working-directory: ${{ env.PROJECT_DIR }}
@@ -41,4 +48,4 @@ jobs:
 
       - name: Destroy Resources
         working-directory: ${{ env.PROJECT_DIR }}
-        run: pulumi destroy --yes
+        run: pulumi destroy --yes --skip-preview
