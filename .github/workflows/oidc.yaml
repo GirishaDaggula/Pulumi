@@ -9,7 +9,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production  # Recommended for deployments
+    environment: production
+    concurrency: 
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true  # Cancel any previous runs
 
     steps:
       - name: Checkout Code
@@ -28,19 +31,13 @@ jobs:
 
       - name: Find and Initialize Stack
         run: |
-          # Find project directory
           PROJECT_DIR=$(find . -name Pulumi.yaml -exec dirname {} \; | head -n 1)
-          if [ -z "$PROJECT_DIR" ]; then
-            echo "::error::No Pulumi.yaml found in repository"
-            exit 1
-          fi
-          
           cd "$PROJECT_DIR"
           
-          # Login to Pulumi (using the token we set earlier)
-          pulumi login
+          # Cancel any in-progress updates
+          pulumi cancel --yes 2>/dev/null || true
           
-          # Select or create stack
+          pulumi login
           if ! pulumi stack select dev --non-interactive; then
             pulumi stack init dev --non-interactive
           fi
@@ -48,9 +45,9 @@ jobs:
       - name: Pulumi Preview
         run: |
           cd "$(find . -name Pulumi.yaml -exec dirname {} \; | head -n 1)"
-          pulumi preview
+          pulumi preview --non-interactive
 
       - name: Pulumi Deploy
         run: |
           cd "$(find . -name Pulumi.yaml -exec dirname {} \; | head -n 1)"
-          pulumi up --yes
+          pulumi up --yes --skip-preview --non-interactive
