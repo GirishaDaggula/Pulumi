@@ -19,15 +19,16 @@ jobs:
         with:
           node-version: 18
           cache: 'npm'
+          cache-dependency-path: './ppinfra/package-lock.json'  # Point to your lock file
 
       - name: Install Dependencies
-        working-directory: ./ppinfra
+        working-directory: ./ppinfra  # Fixed typo from 'working-directory'
         run: |
-          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
-            npm ci
-          else
-            npm install
+          # Generate lock file if it doesn't exist
+          if [ ! -f package-lock.json ]; then
+            npm install --package-lock-only
           fi
+          npm ci
 
       - name: Verify Pulumi Stack
         working-directory: ./ppinfra
