@@ -9,7 +9,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write  # This is REQUIRED for OIDC
+      id-token: write  # Critical for OIDC
       contents: read
     
     steps:
@@ -20,11 +20,9 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: arn:aws:iam::904233128713:role/git
-          aws-region: us-east-1  # Change to your region
+          aws-region: us-east-1
           role-session-name: github-actions-${{ github.run_id }}
-          audience: sts:AssumeRoleWithWebIdentity  # Must match your trust policy
+          audience: sts.amazonaws.com  # Must match trust policy
 
-      - name: Verify AWS credentials
-        run: |
-          aws sts get-caller-identity
-          aws iam list-roles --query 'Roles[?RoleName==`git`]'
+      - name: Verify connection
+        run: aws sts get-caller-identity
