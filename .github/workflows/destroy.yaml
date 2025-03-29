@@ -10,33 +10,42 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Pulumi
-        run: curl -fsSL https://get.pulumi.com | sh
-        env:
-          PULUMI_SKIP_UPDATE_CHECK: true
+      - name: Install Pulumi CLI
+        run: |
+          curl -fsSL https://get.pulumi.com | sh
+          echo "$HOME/.pulumi/bin" >> $GITHUB_PATH
 
       - name: Set Up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
+          cache-dependency-path: 'ppinfra/package-lock.json'
 
-      - name: Install Dependencies
-        run: npm ci
-        working-directory: ./ppinfra  # Adjust if your Pulumi project is in a different directory
+      - name: Install Project Dependencies
+        working-directory: ./ppinfra
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
-      - name: Set Up AWS Credentials
+      - name: Configure AWS Credentials
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          PULUMI_BACKEND_URL: "https://api.pulumi.com"  # Explicit backend URL
 
-      - name: Select Pulumi Stack
-        run: pulumi stack select dev1 --non-interactive || pulumi stack init dev1 --non-interactive
+      - name: Select or Create Pulumi Stack
         working-directory: ./ppinfra
+        run: |
+          if ! pulumi stack select dev1 --non-interactive 2>/dev/null; then
+            echo "Creating new stack 'dev1'..."
+            pulumi stack init dev1 --non-interactive
+          fi
 
-      - name: Destroy Resources
+      - name: Destroy Pulumi Resources
+        working-directory: ./ppinfra
         run: pulumi destroy --yes --skip-preview
-        working-directory: ./ppinfra
