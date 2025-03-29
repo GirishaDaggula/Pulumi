@@ -19,7 +19,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: ${{ secrets.arn:aws:iam::904233128713:role/git }}
+          role-to-assume: arn:aws:iam::904233128713:role/git
           aws-region: us-east-1  # Change to your region
           role-session-name: github-actions-${{ github.run_id }}
           audience: sts:AssumeRoleWithWebIdentity  # Must match your trust policy
