@@ -17,13 +17,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v3  # Updated to v3
         with:
           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
           aws-region: us-east-1
-          role-session-name: GitHubOIDC
-          audience: sts.amazonaws.com  # Explicitly set audience
-          mask-aws-account-id: no
+          role-session-name: GitHubOIDC-${{ github.run_id }}
+          audience: sts.amazonaws.com
 
-      - name: Verify AWS credentials
-        run: aws sts get-caller-identity
+      - name: Verify credentials
+        run: |
+          aws sts get-caller-identity
+          aws iam list-open-id-connect-providers
