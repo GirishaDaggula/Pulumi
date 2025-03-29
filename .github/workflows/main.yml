@@ -22,7 +22,12 @@ jobs:
 
       - name: Install Dependencies
         working-directory: ./ppinfra
-        run: npm ci # Using ci for clean install
+        run: |
+          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: Verify Pulumi Stack
         working-directory: ./ppinfra
