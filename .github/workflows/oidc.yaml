@@ -9,27 +9,11 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: production  # Recommended for deployments
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
-
-      - name: Find and Select Pulumi Stack
-        id: select-stack
-        run: |
-          # Find Pulumi.yaml directory
-          PROJECT_DIR=$(find . -name Pulumi.yaml -exec dirname {} \; | head -n 1)
-          if [ -z "$PROJECT_DIR" ]; then
-            echo "::error::No Pulumi.yaml found in repository"
-            exit 1
-          fi
-          echo "PROJECT_DIR=${PROJECT_DIR}" >> $GITHUB_ENV
-          
-          # Select or create stack
-          cd "$PROJECT_DIR"
-          if ! pulumi stack select dev; then
-            pulumi stack init dev
-          fi
 
       - name: Set Up AWS Credentials with OIDC
         run: |
@@ -38,12 +22,35 @@ jobs:
           echo "PULUMI_ACCESS_TOKEN=${{ secrets.PULUMI_ACCESS_TOKEN }}" >> $GITHUB_ENV
 
       - name: Install Pulumi
-        run: curl -fsSL https://get.pulumi.com | sh
+        run: |
+          curl -fsSL https://get.pulumi.com | sh
+          echo "$HOME/.pulumi/bin" >> $GITHUB_PATH
+
+      - name: Find and Initialize Stack
+        run: |
+          # Find project directory
+          PROJECT_DIR=$(find . -name Pulumi.yaml -exec dirname {} \; | head -n 1)
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "::error::No Pulumi.yaml found in repository"
+            exit 1
+          fi
+          
+          cd "$PROJECT_DIR"
+          
+          # Login to Pulumi (using the token we set earlier)
+          pulumi login
+          
+          # Select or create stack
+          if ! pulumi stack select dev --non-interactive; then
+            pulumi stack init dev --non-interactive
+          fi
 
       - name: Pulumi Preview
-        working-directory: ${{ env.PROJECT_DIR }}
-        run: pulumi preview
+        run: |
+          cd "$(find . -name Pulumi.yaml -exec dirname {} \; | head -n 1)"
+          pulumi preview
 
       - name: Pulumi Deploy
-        working-directory: ${{ env.PROJECT_DIR }}
-        run: pulumi up --yes
+        run: |
+          cd "$(find . -name Pulumi.yaml -exec dirname {} \; | head -n 1)"
+          pulumi up --yes
