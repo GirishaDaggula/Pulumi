@@ -2,6 +2,7 @@
 name: Pulumi Deployment with OIDC
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
