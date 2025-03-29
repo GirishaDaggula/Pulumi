@@ -14,16 +14,22 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Find Pulumi Project Directory
-        id: find-project
+      - name: Find and Select Pulumi Stack
+        id: select-stack
         run: |
+          # Find Pulumi.yaml directory
           PROJECT_DIR=$(find . -name Pulumi.yaml -exec dirname {} \; | head -n 1)
           if [ -z "$PROJECT_DIR" ]; then
             echo "::error::No Pulumi.yaml found in repository"
             exit 1
           fi
           echo "PROJECT_DIR=${PROJECT_DIR}" >> $GITHUB_ENV
-          echo "Found Pulumi project in: ${PROJECT_DIR}"
+          
+          # Select or create stack
+          cd "$PROJECT_DIR"
+          if ! pulumi stack select dev; then
+            pulumi stack init dev
+          fi
 
       - name: Set Up AWS Credentials with OIDC
         run: |
