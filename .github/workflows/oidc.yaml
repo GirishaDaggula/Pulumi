@@ -9,45 +9,56 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production
-    concurrency: 
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true  # Cancel any previous runs
-
+    permissions:
+      id-token: write  # Required for OIDC
+      contents: read   # Required for checkout
+    
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set Up AWS Credentials with OIDC
-        run: |
-          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
-          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
-          echo "PULUMI_ACCESS_TOKEN=${{ secrets.PULUMI_ACCESS_TOKEN }}" >> $GITHUB_ENV
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: us-east-1
+          role-session-name: GitHubActionsPulumiDeploy
 
       - name: Install Pulumi
         run: |
           curl -fsSL https://get.pulumi.com | sh
           echo "$HOME/.pulumi/bin" >> $GITHUB_PATH
 
-      - name: Find and Initialize Stack
+      - name: Set Up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Initialize Pulumi Stack
         run: |
-          PROJECT_DIR=$(find . -name Pulumi.yaml -exec dirname {} \; | head -n 1)
-          cd "$PROJECT_DIR"
-          
-          # Cancel any in-progress updates
-          pulumi cancel --yes 2>/dev/null || true
-          
-          pulumi login
-          if ! pulumi stack select dev --non-interactive; then
+          if ! pulumi stack select dev --non-interactive 2>/dev/null; then
             pulumi stack init dev --non-interactive
+          fi
+          pulumi config set aws:region us-east-1 --non-interactive
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+      - name: Create Website Directory
+        run: |
+          mkdir -p website
+          if [ ! -f website/index.html ]; then
+            echo '<!DOCTYPE html><html><head><title>Welcome</title></head><body><h1>Welcome</h1></body></html>' > website/index.html
+          fi
+          if [ ! -f website/error.html ]; then
+            echo '<!DOCTYPE html><html><head><title>Error</title></head><body><h1>404</h1></body></html>' > website/error.html
           fi
 
       - name: Pulumi Preview
-        run: |
-          cd "$(find . -name Pulumi.yaml -exec dirname {} \; | head -n 1)"
-          pulumi preview --non-interactive
+        run: pulumi preview --non-interactive
 
       - name: Pulumi Deploy
-        run: |
-          cd "$(find . -name Pulumi.yaml -exec dirname {} \; | head -n 1)"
-          pulumi up --yes --skip-preview --non-interactive
+        run: pulumi up --yes --skip-preview --non-interactive
