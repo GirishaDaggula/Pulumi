@@ -19,10 +19,10 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          role-to-assume: arn:aws:iam::904233128713:role/git  # Add your role ARN here
           aws-region: us-east-1
           role-session-name: github-actions-${{ github.run_id }}
-          audience: sts.amazonaws.com  # Must match trust policy
+          audience: sts.amazonaws.com
 
-      - name: Verify credentials
+      - name: Verify AWS credentials
         run: aws sts get-caller-identity
