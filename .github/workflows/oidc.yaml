@@ -3,8 +3,7 @@ name: Pulumi Deployment with OIDC
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   deploy:
@@ -14,51 +13,20 @@ jobs:
       contents: read   # Required for checkout
     
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
           aws-region: us-east-1
           role-session-name: GitHubActionsPulumiDeploy
+          mask-aws-account-id: no
 
-      - name: Install Pulumi
+      - name: Verify AWS credentials
         run: |
-          curl -fsSL https://get.pulumi.com | sh
-          echo "$HOME/.pulumi/bin" >> $GITHUB_PATH
+          aws sts get-caller-identity
+          echo "AWS_REGION=$AWS_REGION" >> $GITHUB_ENV
 
-      - name: Set Up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Initialize Pulumi Stack
-        run: |
-          if ! pulumi stack select dev --non-interactive 2>/dev/null; then
-            pulumi stack init dev --non-interactive
-          fi
-          pulumi config set aws:region us-east-1 --non-interactive
-        env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-
-      - name: Create Website Directory
-        run: |
-          mkdir -p website
-          if [ ! -f website/index.html ]; then
-            echo '<!DOCTYPE html><html><head><title>Welcome</title></head><body><h1>Welcome</h1></body></html>' > website/index.html
-          fi
-          if [ ! -f website/error.html ]; then
-            echo '<!DOCTYPE html><html><head><title>Error</title></head><body><h1>404</h1></body></html>' > website/error.html
-          fi
-
-      - name: Pulumi Preview
-        run: pulumi preview --non-interactive
-
-      - name: Pulumi Deploy
-        run: pulumi up --yes --skip-preview --non-interactive
+      # Rest of your workflow steps...
