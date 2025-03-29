@@ -19,6 +19,61 @@ jobs:
         with:
           node-version: 18
           cache: 'npm'
+          cache-dependency-path: './ppinfra/package-lock.json'
+
+      - name: Install Dependencies
+        working-directory: ./ppinfra
+        run: |
+          if [ ! -f package-lock.json ]; then
+            npm install --package-lock-only
+          fi
+          npm ci
+
+      - name: Initialize Pulumi Stack
+        working-directory: ./ppinfra
+        run: |
+          # Try to select the stack, create if it doesn't exist
+          if ! pulumi stack select dev1 --non-interactive 2>/dev/null; then
+            echo "Creating new stack 'dev1'..."
+            pulumi stack init dev1 --non-interactive
+            # Configure any required stack settings
+            pulumi config set aws:region us-west-2 --non-interactive
+          fi
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+      - name: Run Pulumi Destroy
+        uses: pulumi/actions@v5
+        with:
+          command: destroy
+          stack-name: dev1
+          work-dir: ./ppinfra
+          destroy-comment: "Destroying stack via GitHub Actions"
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}name: Pulumi Infrastructure
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  pulumi-up:
+    name: Pulumi Deployment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
           cache-dependency-path: './ppinfra/package-lock.json'  # Point to your lock file
 
       - name: Install Dependencies
